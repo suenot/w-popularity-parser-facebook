@@ -486,10 +486,13 @@ func (p *FacebookParser) fetchViaCamoufox(ctx context.Context, targetURL string)
 	}
 
 	reqBody, err := json.Marshal(camoufoxFetchRequest{
-		URL:             targetURL,
-		Profile:         "facebook",
-		WaitForSelector: "body",
-		TimeoutMS:       20_000,
+		URL:     targetURL,
+		Profile: "facebook",
+		// Wait for the friends-link to render — the friend / follower
+		// counter widget loads after the page shell. "body" returns too
+		// early and leaves Followers=0 even on healthy fetches.
+		WaitForSelector: `a[href*="/friends"]`,
+		TimeoutMS:       30_000,
 	})
 	if err != nil {
 		return nil, "", fmt.Errorf("%w: marshal camoufox request: %v", shared.ErrTransient, err)
